@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MvvmCore/MvvmCore.csproj" />
+  <Project Path="MvvmWebserver/MvvmWebserver.csproj" />
+  <Project Path="MvvmWpf/MvvmWpf.csproj" />
+</Solution>

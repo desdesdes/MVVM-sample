@@ -1,0 +1,10 @@
+POST https://localhost:7117/Presenter/StartViewModel?id=8D2EF329-98BA-4B67-A980-CD0304489FF0
+###
+POST https://localhost:7117/Presenter/SetProp?id=8D2EF329-98BA-4B67-A980-CD0304489FF0&propName=Text&value=goat
+###
+POST https://localhost:7117/Presenter/InvokeCommand?id=8D2EF329-98BA-4B67-A980-CD0304489FF0&commandName=ConvertTextCommand
+###
+POST https://localhost:7117/Presenter/SetProp?id=8D2EF329-98BA-4B67-A980-CD0304489FF0&propName=Text&value=fish
+###
+POST https://localhost:7117/Presenter/InvokeCommand?id=8D2EF329-98BA-4B67-A980-CD0304489FF0&commandName=ConvertTextCommand
+
