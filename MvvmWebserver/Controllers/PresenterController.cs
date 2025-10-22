@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MvvmCore.Grains;
 using MvvmCore.Utils;
 using MvvmCore.ViewModel;
 
@@ -6,39 +7,37 @@ namespace MvvmWebserver.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class PresenterController : ControllerBase
+public class PresenterController(IGrainFactory GrainFactory) : ControllerBase
 {
-  private static Dictionary<Guid, ChangeManager> _cms = new();
+  [HttpPost("Demo", Name = "Demo")]
+  public async Task<int> Demo()
+  {
+    var grain = GrainFactory.GetGrain<IDemoGrain>(Guid.Empty);
+    return await grain.AddAsync(3, 4);
+  }
 
   [HttpPost("StartViewModel", Name = "StartViewModel")]
-  public void StartViewModel(Guid id)
+  public async Task StartViewModel(Guid id)
   {
-    var cm = new ChangeManager(new PresenterViewModel());
-
-    cm.WriteVmToJson(HttpContext.Response.BodyWriter.AsStream());
-
-    _cms.Add(id, cm);
+    var grain = GrainFactory.GetGrain<IChangeManagerGrain>(id);
+    var result = await grain.StartViewModelAsync(typeof(PresenterViewModel));
+    await HttpContext.Response.BodyWriter.WriteAsync(result);
   }
 
   [HttpPost("SetProp", Name = "SetProp")]
-  public void SetProp(Guid id, string propName, string value)
+  public async Task SetProp(Guid id, string propName, string value)
   {
-    var cm = _cms[id];
-
-    cm.SetProp(propName, value);
-
-    cm.WriteVmChangesToJson(HttpContext.Response.BodyWriter.AsStream());
-    cm.ClearChanges();
+    var grain = GrainFactory.GetGrain<IChangeManagerGrain>(id);
+    var result = await grain.SetPropAsync(propName, value);
+    await HttpContext.Response.BodyWriter.WriteAsync(result);
   }
 
   [HttpPost("InvokeCommand", Name = "InvokeCommand")]
-  public void InvokeCommand(Guid id, string commandName)
+  public async Task InvokeCommand(Guid id, string commandName)
   {
-    var cm = _cms[id];
+    var grain = GrainFactory.GetGrain<IChangeManagerGrain>(id);
+    var result = await grain.InvokeCommandAsync(commandName);
 
-    cm.InvokeCommand(commandName);
-
-    cm.WriteVmChangesToJson(HttpContext.Response.BodyWriter.AsStream());
-    cm.ClearChanges();
+    await HttpContext.Response.BodyWriter.WriteAsync(result);
   }
 }
