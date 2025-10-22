@@ -1,8 +1,10 @@
 ﻿using MvvmCore.Utils;
-using Orleans;
+using Orleans.Placement;
 
 namespace MvvmCore.Grains;
 
+[Immovable] // makes sure orleans does not move this grain to another silo
+[CollectionAgeLimit(Hours = 8)] // if grain is used for 8 hours, it can be removed
 public class ChangeManagerGrain : Grain, IChangeManagerGrain
 {
   ChangeManager? _cm;
