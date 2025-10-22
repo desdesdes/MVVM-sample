@@ -2,4 +2,5 @@
   <Project Path="MvvmCore/MvvmCore.csproj" />
   <Project Path="MvvmWebserver/MvvmWebserver.csproj" />
   <Project Path="MvvmWpf/MvvmWpf.csproj" />
+  <Project Path="OrleansHost/OrleansHost.csproj" Id="627323c0-b5f3-4622-82be-5fabdb220f01" />
 </Solution>
