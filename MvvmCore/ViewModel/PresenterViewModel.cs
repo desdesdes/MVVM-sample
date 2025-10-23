@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Text.Json.Nodes;
 using System.Windows.Input;
 using MvvmCore.Model;
 using MvvmCore.Utils;
@@ -7,6 +8,21 @@ namespace MvvmCore.ViewModel;
 
 public class PresenterViewModel : ObservableObject
 {
+  public PresenterViewModel()
+  {
+
+  }
+
+  public PresenterViewModel(JsonObject json)
+  {
+    _text = json["Text"]!.GetValue<string?>();
+
+    foreach(var item in json["History"]!.AsArray())
+    {
+      _history.Add(item!.GetValue<string>());
+    }
+  }
+
   private readonly ToUpperTextConverter _textConverter = new();
   private string? _text;
   private readonly ObservableCollection<string> _history = new ObservableCollection<string>();

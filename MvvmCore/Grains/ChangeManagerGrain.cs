@@ -1,11 +1,11 @@
-﻿using MvvmCore.Utils;
+﻿using System.Text.Json.Nodes;
+using MvvmCore.Utils;
 using Orleans.Placement;
 
 namespace MvvmCore.Grains;
 
-[Immovable] // makes sure orleans does not move this grain to another silo
-[CollectionAgeLimit(Hours = 8)] // if grain is used for 8 hours, it can be removed
-public class ChangeManagerGrain : Grain, IChangeManagerGrain
+[CollectionAgeLimit("0:0:10")]
+public class ChangeManagerGrain : Grain<ChangeManagerGrainState>, IChangeManagerGrain
 {
   ChangeManager? _cm;
 
@@ -15,21 +15,47 @@ public class ChangeManagerGrain : Grain, IChangeManagerGrain
       throw new Exception("Could not create ViewModel of type " + vmType.FullName);
 
     _cm = new ChangeManager(vm);
+    State.VmType = vmType;
 
+    return await WriteFullStateAsync();
+  }
+
+  private async Task<byte[]> WriteFullStateAsync()
+  {
     using var stream = new MemoryStream();
-    _cm.WriteVmToJson(stream);
+    _cm!.WriteVmToJson(stream);
+    var data = stream.ToArray();
 
-    return stream.ToArray();
+    State.VmJson = data;
+    await WriteStateAsync();
+
+    return data;
+  }
+
+  private void RestoreState()
+  {
+    if(_cm == null)
+    {
+      if(State.VmType == null)
+      {
+        throw new Exception("ChangeManager not initialized. Call StartViewModel first.");
+      }
+
+      var json = (JsonObject)JsonObject.Parse(State.VmJson)!;
+      var vm = Activator.CreateInstance(State.VmType, new object[] { json }) as ObservableObject ??
+        throw new Exception("Could not create ViewModel of type " + State.VmType.FullName);
+
+      _cm = new ChangeManager(vm);
+    }
   }
 
   public async Task<byte[]> SetPropAsync(string propName, string value)
   {
-    if(_cm == null)
-    {
-      throw new Exception("ChangeManager not initialized. Call StartViewModel first.");
-    }
+    RestoreState();
 
-    _cm.SetProp(propName, value);
+    _cm!.SetProp(propName, value);
+
+    await WriteFullStateAsync();
 
     using var stream = new MemoryStream();
     _cm.WriteVmChangesToJson(stream);
@@ -40,12 +66,10 @@ public class ChangeManagerGrain : Grain, IChangeManagerGrain
 
   public async Task<byte[]> InvokeCommandAsync(string commandName)
   {
-    if(_cm == null)
-    {
-      throw new Exception("ChangeManager not initialized. Call StartViewModel first.");
-    }
+    RestoreState();
 
     _cm.InvokeCommand(commandName);
+    await WriteFullStateAsync();
 
     using var stream = new MemoryStream();
     _cm.WriteVmChangesToJson(stream);
